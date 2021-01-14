@@ -37,8 +37,6 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-let posts = [];
-
 app.get("/", function(req, res){
   Post.find({}, function(err, foundPosts){
     if (!err) {
@@ -70,25 +68,31 @@ app.post("/compose", function(req, res){
     content: req.body.postBody
   }); 
 
-  newPost.save(); 
-
-  res.redirect("/");
+  newPost.save(function(err) {
+    if (!err) {
+      res.redirect("/");
+    } else {
+      console.log(err); 
+    }
+  }); 
 });
 
-app.get("/posts/:postName", function(req, res){
-  const requestedTitle = _.lowerCase(req.params.postName);
+app.get("/posts/:postID", function(req, res){
+  const requestedPostID = req.params.postID;
 
-  posts.forEach(function(post){
-    const storedTitle = _.lowerCase(post.title);
-
-    if (storedTitle === requestedTitle) {
-      res.render("post", {
-        title: post.title,
-        content: post.content
-      });
+  Post.findOne(
+    {_id: requestedPostID},
+    function(err, foundPost) {
+      if (!err) {
+        res.render("post", {
+          title: foundPost.title,
+          content: foundPost.content
+        }); 
+      } else {
+        console.log(err); 
+      }
     }
-  });
-
+  ); 
 });
 
 app.listen(3000, function() {
